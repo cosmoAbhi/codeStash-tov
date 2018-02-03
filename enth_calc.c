@@ -2,7 +2,7 @@
 #include<stdio.h>
 #include<conio.h>
 #include<math.h>
-
+//trial comment
 //This code calculates the critical enthalpy of a neutron star
 double EOS(double, int);
 double EOSinv(double, int);
