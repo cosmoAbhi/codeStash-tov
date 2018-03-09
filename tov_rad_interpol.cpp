@@ -20,7 +20,6 @@ double K=7.29935;
 double tau=5.0/3.0;
 double a0=1.0;
 double expLambda;
-//int i;//loop variable
 //all units are in km
 //arrays for storing values of dependent variables
 double m[14000];
