@@ -12,23 +12,23 @@ double EOSder(double, double, int); //returns the value of dp/d(rho)
 double mDer(double, double);
 double PDer(double, double, double, double);
 double betaDer(double, double, double, double, double, double, int);
-double rstart=0.01;
-double rstop=12.96;
-double rstep=0.01;
-double r=0.01;
+double rstart=0.001;
+double rstop=14.000;
+double rstep=0.001;
+double r=0.001;
 double K=7.29935;
 double tau=5.0/3.0;
 double a0=1.0;
 double expLambda;
-int i;//loop variable
+//int i;//loop variable
 //all units are in km
 //arrays for storing values of dependent variables
-double m[1500];
-double rho[1500];
-double P[1500];
-double y[1500];
-double H[1500];
-double beta[1500];
+double m[14000];
+double rho[14000];
+double P[14000];
+double y[14000];
+double H[14000];
+double beta[14000];
 //arrays for storing intermediate values required to compute dependents by RK4
 double mRK[4];
 double PRK[4];
@@ -61,8 +61,6 @@ int main()
             rhoEOS[EOScount]*=7.4237e-19;
             pEOS[EOScount++]*=8.2601e-40;
         }
-
-        EOScount--;
         infile.close();
     }
     ofstream write;
@@ -74,9 +72,9 @@ int main()
     H[0]=a0*pow(rstart, 2.0);//a0 is arbitrarily chosen
     beta[0]=2*a0*rstart;
     y[0]=r*beta[0]/H[0];
-    write<<"    r       m        P       rho       H        y"<<endl;
-    write<<r<<" "<< m[0]<<" "<<P[0]<<"  "<<rho[0]<<"    "<<H[0]<<"  "<<y[0]<<endl;
-    for(i=1;i<1296;i++)
+    write<<"    r       m           P           rho         H                   y"<<endl;
+    write<<r<<" "<< m[0]<<" "<<P[0]<<"  "<<rho[0]<<"    "<<H[0]<<"              "<<y[0]<<endl;
+    for(int i=1;i<14000;i++)
     {
         if(r==rstop)
             break;
@@ -114,12 +112,14 @@ int main()
         //calculating RK4 final results for this step
         m[i]=m[i-1]+mRK[0]/6.0+mRK[1]/3.0+mRK[2]/3.0+mRK[3]/6.0;
         P[i]=P[i-1]+PRK[0]/6.0+PRK[1]/3.0+PRK[2]/3.0+PRK[3]/6.0;
+        if(P[i]<=0)
+            break;
         beta[i]=beta[i-1]+betaRK[0]/6.0+betaRK[1]/3.0+betaRK[2]/3.0+betaRK[3]/6.0;
         rho[i]=EOSinv(P[i], choice);
         H[i]=H[i-1]+beta[i]*rstep;
         r=r+rstep;
         y[i]=r*beta[i]/H[i];
-        write<<r<<" "<< m[i]<<" "<<P[i]<<"  "<<rho[i]<<"    "<<H[i]<<"  "<<y[i]<<endl;
+        write<<r<<" "<< m[i]<<" "<<P[i]<<"  "<<rho[i]<<"    "<<H[i]<<"      "<<y[i]<<endl;
     }
     write.close();
 }
@@ -128,10 +128,10 @@ double EOS(double dens, int choice)
     switch(choice)
     {
         case 1: return K*pow(dens, tau);
-        case 2: for(i=1;i<EOScount;i++)
+        case 2: for(int i=1;i<EOScount;i++)
                 {
                     if(rhoEOS[i-1]==dens)
-                        return rhoEOS[i-1];
+                        return pEOS[i-1];
                     if(dens>rhoEOS[i-1]&&dens<rhoEOS[i])
                     {
                         frac=(dens-rhoEOS[i-1])/(rhoEOS[i]-rhoEOS[i-1]);
@@ -149,13 +149,15 @@ double EOSinv(double pres, int choice)
     switch(choice)
     {
         case 1: return pow(pres/K, 1/tau);
-        case 2: for(i=1;i<EOScount;i++)
+        case 2: for(int i=1;i<EOScount;i++)
                 {
                     if(pEOS[i-1]==pres)
                         return rhoEOS[i-1];
                     if(pres>pEOS[i-1]&&pres<pEOS[i])
                     {
                         frac=(pres-pEOS[i-1])/(pEOS[i]-pEOS[i-1]);
+                        //cout<<frac<<endl;
+                        //cout<<(frac*(rhoEOS[i]-rhoEOS[i-1])+rhoEOS[i-1])<<endl;
                         return (frac*(rhoEOS[i]-rhoEOS[i-1])+rhoEOS[i-1]);
                     }
 
@@ -170,7 +172,7 @@ double EOSder(double P, double rho, int choice)
     switch(choice)
     {
         case 1: return tau*P/rho;
-        case 2: for(i=1;i<EOScount;i++)
+        case 2: for(int i=1;i<EOScount;i++)
                 {
                     if(pEOS[i-1]==P)
                         return (pEOS[i]-pEOS[i-1])/(rhoEOS[i]-rhoEOS[i-1]);
