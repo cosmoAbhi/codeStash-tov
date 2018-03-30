@@ -16,8 +16,8 @@ double rstart=0.001;
 double rstop=14.000;
 double rstep=0.001;
 double r=0.001;
-double K=7.29935;
-double tau=5.0/3.0;
+double K=101.4496;//7.29935;
+double tau=2.0;//5.0/3.0;
 double a0=1.0;
 double expLambda;
 //all units are in km
@@ -28,6 +28,7 @@ double P[14000];
 double y[14000];
 double H[14000];
 double beta[14000];
+double Ye_BE[14000];
 //arrays for storing intermediate values required to compute dependents by RK4
 double mRK[4];
 double PRK[4];
@@ -65,14 +66,15 @@ int main()
     ofstream write;
     write.open("TOVrad_output.txt");
 
-    rho[0]=0.000741111;//km^(-2) central density
+    rho[0]=0.0012355;//0.000741111;//km^(-2) central density
     P[0]=EOS(rho[0], choice);
     m[0]=4/3*M_PI*pow(rstart, 3.0)*rho[0];
     H[0]=a0*pow(rstart, 2.0);//a0 is arbitrarily chosen
     beta[0]=2*a0*rstart;
     y[0]=r*beta[0]/H[0];
-    write<<"    r       m           P           rho         H                   y"<<endl;
-    write<<r<<" "<< m[0]<<" "<<P[0]<<"  "<<rho[0]<<"    "<<H[0]<<"              "<<y[0]<<endl;
+    Ye_BE[0]=0.1*(1-exp(-rho[0]/0.0006))+0.1*exp(-rho[0]/0.00002);
+    write<<"    r       m           P           rho         H                   y           Ye_BE"<<endl;
+    write<<r<<" "<< m[0]<<" "<<P[0]<<"  "<<rho[0]<<"    "<<H[0]<<"              "<<y[0]<<"      "<<Ye_BE[0]<<endl;
     for(int i=1;i<14000;i++)
     {
         if(r==rstop)
@@ -118,7 +120,13 @@ int main()
         H[i]=H[i-1]+beta[i]*rstep;
         r=r+rstep;
         y[i]=r*beta[i]/H[i];
-        write<<r<<" "<< m[i]<<" "<<P[i]<<"  "<<rho[i]<<"    "<<H[i]<<"      "<<y[i]<<endl;
+        if(rho[i]>=1e-4)
+            Ye_BE[i]=0.1*(1-exp(-rho[i]/0.0006));
+        else if(rho[i]>=1e-6&&rho[i]<1e-4)
+            Ye_BE[i]=0.1*(1-exp(-rho[i]/0.0006))+0.1*exp(-rho[i]/0.00002);
+
+        if(isnan(m[i])==false)
+            write<<r<<" "<< m[i]<<" "<<P[i]<<"  "<<rho[i]<<"    "<<H[i]<<"      "<<y[i]<<"      "<<Ye_BE[i]<<endl;
     }
     write.close();
 }
